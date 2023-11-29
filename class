@@ -1,0 +1,122 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+
+// Define the constants
+const int NUM_BIO_STREAM_CLASSES = 3;
+const int NUM_MATH_STREAM_CLASSES = 5;
+const int STUDENTS_PER_CLASS = 40;
+const int NUM_SUBJECTS = 3;
+
+// Define the structure for a student
+struct Student {
+    std::string name;
+    int stream;  // 0 for Bio, 1 for Math
+    int marks[NUM_SUBJECTS];
+    int totalMarks;
+    int schoolRank;
+    int classRank;
+};
+
+// Function to calculate the total marks for a student
+int calculateTotalMarks(const Student& student) {
+    int total = 0;
+    for (int i = 0; i < NUM_SUBJECTS; ++i) {
+        total += student.marks[i];
+    }
+    return total;
+}
+
+// Function to read student data
+void readStudentData(std::vector<Student>& students) {
+    for (int i = 0; i < NUM_BIO_STREAM_CLASSES; ++i) {
+        for (int j = 0; j < STUDENTS_PER_CLASS; ++j) {
+            Student student;
+            std::cout << "Enter the name of Bio student in class " << i + 1 << " student " << j + 1 << ": ";
+            std::cin >> student.name;
+            student.stream = 0;  // Bio stream
+            std::cout << "Enter the marks for Biology, Physics, and Chemistry (space-separated): ";
+            for (int k = 0; k < NUM_SUBJECTS; ++k) {
+                std::cin >> student.marks[k];
+            }
+            students.push_back(student);
+        }
+    }
+
+    for (int i = 0; i < NUM_MATH_STREAM_CLASSES; ++i) {
+        for (int j = 0; j < STUDENTS_PER_CLASS; ++j) {
+            Student student;
+            std::cout << "Enter the name of Math student in class " << i + 1 << " student " << j + 1 << ": ";
+            std::cin >> student.name;
+            student.stream = 1;  // Math stream
+            std::cout << "Enter the marks for Combined Maths, Physics, and Chemistry (space-separated): ";
+            for (int k = 0; k < NUM_SUBJECTS; ++k) {
+                std::cin >> student.marks[k];
+            }
+            students.push_back(student);
+        }
+    }
+}
+
+// Function to calculate ranks
+void calculateRanks(std::vector<Student>& students) {
+    // Calculate total marks and sort students by total marks
+    for (auto& student : students) {
+        student.totalMarks = calculateTotalMarks(student);
+    }
+
+    std::sort(students.begin(), students.end(), [](const Student& a, const Student& b) {
+        return a.totalMarks > b.totalMarks;
+    });
+
+    // Assign school ranks
+    int rank = 1;
+    for (auto& student : students) {
+        student.schoolRank = rank++;
+    }
+
+    // Assign class ranks
+    for (int i = 0; i < students.size(); i += STUDENTS_PER_CLASS) {
+        std::sort(students.begin() + i, students.begin() + i + STUDENTS_PER_CLASS,
+                  [](const Student& a, const Student& b) {
+                      return a.totalMarks > b.totalMarks;
+                  });
+
+        for (int j = i; j < i + STUDENTS_PER_CLASS; ++j) {
+            students[j].classRank = j - i + 1;
+        }
+    }
+}
+
+// Function to print and write ranks to a file
+void printAndWriteRanks(const std::vector<Student>& students) {
+    std::ofstream outFile("rank_output.txt");
+
+    std::cout << std::setw(20) << "Name" << std::setw(10) << "Stream" << std::setw(10) << "Total Marks"
+              << std::setw(10) << "School Rank" << std::setw(10) << "Class Rank" << std::endl;
+
+    outFile << std::setw(20) << "Name" << std::setw(10) << "Stream" << std::setw(10) << "Total Marks"
+            << std::setw(10) << "School Rank" << std::setw(10) << "Class Rank" << std::endl;
+
+    for (const auto& student : students) {
+        std::cout << std::setw(20) << student.name << std::setw(10) << (student.stream == 0 ? "Bio" : "Math")
+                  << std::setw(10) << student.totalMarks << std::setw(10) << student.schoolRank
+                  << std::setw(10) << student.classRank << std::endl;
+
+        outFile << std::setw(20) << student.name << std::setw(10) << (student.stream == 0 ? "Bio" : "Math")
+                << std::setw(10) << student.totalMarks << std::setw(10) << student.schoolRank
+                << std::setw(10) << student.classRank << std::endl;
+    }
+
+    outFile.close();
+}
+
+int main() {
+    std::vector<Student> students;
+    readStudentData(students);
+    calculateRanks(students);
+    printAndWriteRanks(students);
+
+    return 0;
+}
